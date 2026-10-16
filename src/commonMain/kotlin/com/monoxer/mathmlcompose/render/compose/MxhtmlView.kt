@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.monoxer.mathmlcompose.mathml.MathMLParser
 import com.monoxer.mathmlcompose.mxhtml.splitMxhtmlSegments
+import com.monoxer.mathmlcompose.render.compose.preview.PreviewDefaults
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
@@ -92,17 +93,10 @@ fun MxhtmlView(
     }
 }
 
-private val previewColors =
-    MxhtmlColors(
-        accentColor = Color(0xFFE91E8C),
-        focusedBackground = Color(0x11000000),
-        focusedBorder = Color(0xFF8C8C8C),
-    )
-
 @Preview(showBackground = true)
 @Composable
 private fun MxhtmlViewPlainTextPreview() {
-    MxhtmlView(text = "二次方程式 ax²+bx+c=0 の解を求めよ。", colors = previewColors)
+    MxhtmlView(text = "二次方程式 ax²+bx+c=0 の解を求めよ。", colors = PreviewDefaults.colors)
 }
 
 @Preview(showBackground = true)
@@ -113,7 +107,7 @@ private fun MxhtmlViewPureMathPreview() {
             "<math><mfrac><mrow><mo>-</mo><mi>b</mi><mo>&#177;</mo>" +
                 "<msqrt><mrow><msup><mi>b</mi><mn>2</mn></msup><mo>-</mo><mn>4</mn><mi>a</mi><mi>c</mi></mrow>" +
                 "</msqrt></mrow><mrow><mn>2</mn><mi>a</mi></mrow></mfrac></math>",
-        colors = previewColors,
+        colors = PreviewDefaults.colors,
     )
 }
 
@@ -124,6 +118,6 @@ private fun MxhtmlViewMixedPreview() {
         text =
             "<mxhtml>解の公式は <math><mi>x</mi><mo>=</mo>" +
                 "<mfrac><mrow><mo>-</mo><mi>b</mi></mrow><mrow><mn>2</mn><mi>a</mi></mrow></mfrac></math> です。</mxhtml>",
-        colors = previewColors,
+        colors = PreviewDefaults.colors,
     )
 }

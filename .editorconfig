@@ -1,0 +1,40 @@
+root = true
+
+[*.{kt,kts}]
+max_line_length = 120
+ktlint_standard_no-unused-imports = enabled
+# Enable Compose rules
+ktlint_compose_naming-check = enbaled
+ktlint_compose_param-order-check = enbaled
+ktlint_compose_modifier-not-used-at-root = enbaled
+ktlint_compose_modifier-missing-check = enbaled
+ktlint_compose_remember-content-missing-check = enbaled
+ktlint_compose_lambda-param-event-trailing = enbaled
+ktlint_compose_vm-forwarding-check = enbaled
+ktlint_compose_parameter-naming = enbaled
+ktlint_compose_mutable-params-check = enbaled
+ktlint_compose_vm-injection-check = enbaled
+ktlint_compose_modifier-reused-check = enbaled
+ktlint_compose_multiple-emitters-check = enbaled
+ktlint_compose_compositionlocal-allowlist = enbaled
+ktlint_compose_material-two = enbaled
+ktlint_compose_modifier-without-default-check = enbaled
+ktlint_compose_modifier-clickable-order = enbaled
+ktlint_compose_preview-naming = enbaled
+ktlint_compose_content-trailing-lambda = enbaled
+ktlint_compose_mutable-state-param-check = enbaled
+ktlint_compose_content-emitter-returning-values-check = enbaled
+ktlint_compose_remember-missing-check = enbaled
+ktlint_compose_unstable-collections = enbaled
+ktlint_compose_modifier-composed-check = enbaled
+ktlint_compose_compositionlocal-naming = enbaled
+ktlint_compose_composable-annotation-naming = enbaled
+ktlint_compose_modifier-naming = enbaled
+ktlint_compose_lambda-param-in-effect = enbaled
+ktlint_compose_mutable-state-autoboxing = enbaled
+ktlint_compose_preview-annotation-naming = enbaled
+ktlint_compose_defaults-visibility = enbaled
+ktlint_compose_content-slot-reused = enbaled
+ktlint_compose_preview-public-check = enbaled
+# Disable standard function naming for Composables (they should use PascalCase)
+ktlint_standard_function-naming = disabled

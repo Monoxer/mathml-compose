@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.monoxer.mathmlcompose.input.hint.hintInputSlot
-import com.monoxer.mathmlcompose.math.MathCursor
 import com.monoxer.mathmlcompose.math.MathElement
 import com.monoxer.mathmlcompose.math.MathMfrac
 import com.monoxer.mathmlcompose.math.MathMi
@@ -51,6 +50,7 @@ import com.monoxer.mathmlcompose.math.MathNone
 import com.monoxer.mathmlcompose.math.MathPlaceholder
 import com.monoxer.mathmlcompose.render.compose.internal.mathlayout.MathCanvasConfig
 import com.monoxer.mathmlcompose.render.compose.internal.mathlayout.createLayout
+import com.monoxer.mathmlcompose.render.compose.preview.PreviewDefaults
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -171,13 +171,6 @@ private fun DrawScope.drawActiveMrowHighlight(
     )
 }
 
-private val previewColors =
-    MxhtmlColors(
-        accentColor = Color(0xFFE91E8C),
-        focusedBackground = Color(0x11000000),
-        focusedBorder = Color(0xFF8C8C8C),
-    )
-
 @Preview(showBackground = true)
 @Composable
 private fun MathCanvasPreview() {
@@ -250,7 +243,7 @@ private fun MathCanvasPreview() {
 
     MathCanvas(
         element = formula,
-        colors = previewColors,
+        colors = PreviewDefaults.colors,
         modifier = Modifier.padding(16.dp),
         fontSize = 20.sp,
     )
@@ -282,7 +275,7 @@ private fun MathCanvasHintInputPreview() {
         )
     MathCanvas(
         element = element,
-        colors = previewColors,
+        colors = PreviewDefaults.colors,
         modifier = Modifier.padding(16.dp),
         fontSize = 20.sp,
         editable = true,

@@ -5,9 +5,7 @@ import com.monoxer.mathmlcompose.math.MSPACE_LINEBREAK_NEWLINE
 import com.monoxer.mathmlcompose.math.MX_DATA_IS_HIDDEN
 import com.monoxer.mathmlcompose.math.MX_IS_PLACEHOLDER
 import com.monoxer.mathmlcompose.math.MX_JUDGE
-import com.monoxer.mathmlcompose.math.MathCursor
 import com.monoxer.mathmlcompose.math.MathElement
-import com.monoxer.mathmlcompose.math.MathFilledSlot
 import com.monoxer.mathmlcompose.math.MathMfrac
 import com.monoxer.mathmlcompose.math.MathMi
 import com.monoxer.mathmlcompose.math.MathMmultiscriptsRegularized

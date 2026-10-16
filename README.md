@@ -160,6 +160,9 @@ src/commonMain/kotlin/com/monoxer/mathmlcompose/
 ## Development
 
 ```bash
-./gradlew jvmTest          # run unit tests on the JVM target
-./gradlew build            # build all targets
+./gradlew jvmTest             # run unit tests on the JVM target
+./gradlew ktlintCheck          # check Kotlin formatting and style
+./gradlew ktlintFormat         # format Kotlin sources
+./gradlew detekt               # run static analysis and auto-correct supported findings
+./gradlew build                # build and test all targets; also runs ktlintCheck and detekt
 ```

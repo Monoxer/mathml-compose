@@ -283,7 +283,6 @@ class MathLayoutSlotStabilityTest {
         val plainLayout = createLayout(plainState.root)
         plainLayout.measure(textMeasurer, CONFIG)
         val plainNumUpper = plainLayout.measuredUpperHeight
-        val plainNumBottom = plainLayout.measuredBottomHeight
 
         // Numerator "x^{cursor}": x with superscript
         val supState = plainState.insertSup()

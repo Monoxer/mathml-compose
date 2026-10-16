@@ -2,9 +2,11 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     id("com.android.library") version "8.11.2"
+    id("io.gitlab.arturbosch.detekt") version "1.23.8"
     id("org.jetbrains.kotlin.multiplatform") version "2.3.20"
     id("org.jetbrains.compose") version "1.9.3"
     id("org.jetbrains.kotlin.plugin.compose") version "2.3.20"
+    id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
 }
 
 group = "com.monoxer.mathmlcompose"
@@ -63,5 +65,35 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+}
+
+dependencies {
+    ktlintRuleset("io.nlopez.compose.rules:ktlint:0.5.3")
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    allRules = false
+    config.setFrom(files("$rootDir/detekt.yml"))
+    source.setFrom(files("src/"))
+    parallel = true
+    autoCorrect = true
+}
+
+ktlint {
+    version.set("1.8.0")
+    android.set(false)
+    ignoreFailures.set(false)
+    reporters {
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
+    }
+}
+
+// Configure sources after the plugin so generated files are never linted.
+afterEvaluate {
+    tasks.withType<org.jlleitschuh.gradle.ktlint.tasks.BaseKtLintCheckTask>().configureEach {
+        setSource(fileTree(projectDir) { exclude("**/build/**", "**/generated/**") })
     }
 }
