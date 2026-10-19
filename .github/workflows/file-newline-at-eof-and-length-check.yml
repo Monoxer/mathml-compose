@@ -1,0 +1,30 @@
+name: file-newline-at-eof-and-length-check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  FileNewlineAtEOFAndLengthCheck:
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # `!cancelled()` keeps each check running even if a previous one failed.
+      - name: Check newline at EOF
+        if: ${{ !cancelled() }}
+        run: .github/scripts/newline-at-eof.sh
+
+      - name: Check file length
+        if: ${{ !cancelled() }}
+        run: .github/scripts/file-length-check.sh
