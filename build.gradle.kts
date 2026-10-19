@@ -1,6 +1,8 @@
+import app.cash.licensee.UnusedAction.IGNORE
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
+    id("app.cash.licensee") version "1.14.1"
     id("com.android.library") version "8.11.2"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
     id("org.jetbrains.kotlin.multiplatform") version "2.3.20"
@@ -89,6 +91,20 @@ ktlint {
         reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
         reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
     }
+}
+
+licensee {
+    // The shared allowlist is evaluated independently for each KMP target.
+    unusedAction(IGNORE)
+    allow("0BSD")
+    allow("Apache-2.0")
+    allow("BSD-2-Clause")
+    allow("BSD-3-Clause")
+    allow("CC0-1.0")
+    allow("ISC")
+    allow("MIT")
+    allow("MIT-0")
+    allow("Unlicense")
 }
 
 // Configure sources after the plugin so generated files are never linted.

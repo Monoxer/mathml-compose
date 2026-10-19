@@ -1,0 +1,45 @@
+name: Dependency Licenses
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  DependencyLicenses:
+    name: DependencyLicenses
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+
+      - name: Check dependency licenses
+        run: ./gradlew licensee
+
+      - name: Upload dependency license report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dependency-license-report
+          path: build/reports/licensee/
+          if-no-files-found: warn
+          retention-days: 14
