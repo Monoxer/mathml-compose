@@ -1,0 +1,44 @@
+name: iOS Unit Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  IosUnitTests:
+    name: IosUnitTests
+    runs-on: macos-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+
+      - name: Run iOS simulator unit tests
+        run: ./gradlew iosSimulatorArm64Test
+
+      - name: Upload iOS test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-test-results
+          path: build/test-results/iosSimulatorArm64Test/
+          retention-days: 7
