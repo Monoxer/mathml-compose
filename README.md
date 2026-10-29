@@ -22,6 +22,27 @@ Internally both are backed by the same MathML parser (`MathMLParser`) and elemen
 (`MathElement`), so read-only rendering and editable input always agree on how a given formula
 looks.
 
+## Demo
+
+The `demo` module showcases read-only mixed MxHTML/MathML rendering and an interactive formula
+editor backed by `FormulaInputState`.
+
+![MathML Compose demo](demo/demo.png)
+
+```bash
+# Desktop
+./gradlew :demo:run
+
+# Browser
+./gradlew :demo:wasmJsBrowserDevelopmentRun
+
+# Android — requires a connected device or running emulator
+./gradlew :demoAndroidApp:installDebug
+
+# iOS — select a simulator and run the demoIosApp scheme in Xcode
+open demoIosApp/demoIosApp.xcodeproj
+```
+
 ## Installation
 
 This library is not yet published to Maven Central. Until then, consume it from source via a
@@ -146,15 +167,19 @@ implementation detail and may change without notice between versions.
 ## Project layout
 
 ```
-src/commonMain/kotlin/com/monoxer/mathmlcompose/
-├── math/                         # Math AST, attributes
-├── mathml/                       # MathML parser and serializer
-├── mxhtml/                       # MxHTML segment/parser layer
-├── input/
-│   ├── formula/                  # free-form formula input state
-│   └── hint/                     # fill-in-the-blank formula input state
-└── render/
-    └── compose/                  # Compose UI entry points and math layout internals
+.
+├── src/
+│   ├── commonMain/kotlin/com/monoxer/mathmlcompose/
+│   │   ├── math/                 # Math AST and attributes
+│   │   ├── mathml/               # MathML parser and serializer
+│   │   ├── mxhtml/               # MxHTML segment and parser layer
+│   │   ├── input/                # Formula and hint-input state machines
+│   │   └── render/compose/       # Compose UI and math layout
+│   ├── commonTest/               # Cross-platform tests
+│   └── jvmTest/                  # JVM-specific tests
+├── demo/                         # Shared Android, Desktop, Wasm, and iOS demo UI
+├── demoAndroidApp/               # Android application entry point for the demo
+└── demoIosApp/                   # SwiftUI application entry point for the demo
 ```
 
 ## Development

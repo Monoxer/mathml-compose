@@ -1,5 +1,8 @@
 rootProject.name = "mathml-compose"
 
+include(":demo")
+include(":demoAndroidApp")
+
 pluginManagement {
     repositories {
         google {
