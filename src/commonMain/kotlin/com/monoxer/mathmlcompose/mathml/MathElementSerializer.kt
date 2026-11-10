@@ -4,7 +4,6 @@ import com.monoxer.mathmlcompose.math.MSPACE_LINEBREAK_ATTR
 import com.monoxer.mathmlcompose.math.MSPACE_LINEBREAK_NEWLINE
 import com.monoxer.mathmlcompose.math.MX_DATA_IS_HIDDEN
 import com.monoxer.mathmlcompose.math.MX_IS_PLACEHOLDER
-import com.monoxer.mathmlcompose.math.MX_JUDGE
 import com.monoxer.mathmlcompose.math.MathCursor
 import com.monoxer.mathmlcompose.math.MathElement
 import com.monoxer.mathmlcompose.math.MathFilledSlot
@@ -17,7 +16,6 @@ import com.monoxer.mathmlcompose.math.MathMover
 import com.monoxer.mathmlcompose.math.MathMprescriptsMarker
 import com.monoxer.mathmlcompose.math.MathMroot
 import com.monoxer.mathmlcompose.math.MathMrow
-import com.monoxer.mathmlcompose.math.MathMrowWithCriterion
 import com.monoxer.mathmlcompose.math.MathMspace
 import com.monoxer.mathmlcompose.math.MathMsqrt
 import com.monoxer.mathmlcompose.math.MathMsub
@@ -29,7 +27,7 @@ import com.monoxer.mathmlcompose.math.MathMunderover
 import com.monoxer.mathmlcompose.math.MathNone
 import com.monoxer.mathmlcompose.math.MathPlaceholder
 import com.monoxer.mathmlcompose.math.MathStructuralNone
-import com.monoxer.mathmlcompose.math.criterionToString
+import com.monoxer.mathmlcompose.math.requireValidDataAttributes
 
 private const val PLACEHOLDER_CHAR = "□"
 
@@ -66,19 +64,24 @@ private fun MathElement.toMathMLInner(): String =
         }
 
         is MathMrow -> {
-            when (children.size) {
-                0 -> ""
-                1 -> children[0].toMathMLInner()
-                else -> "<mrow>${children.joinToString("") { it.toMathMLInner() }}</mrow>"
+            val attributesSnapshot = attributes.toMap()
+            if (attributesSnapshot.isNotEmpty()) {
+                // Always emit <mrow> because its attributes must survive even with zero or one child.
+                requireValidDataAttributes(attributesSnapshot)
+                val serializedAttributes =
+                    attributesSnapshot
+                        .entries
+                        .sortedBy { it.key }
+                        .joinToString(" ") { (name, value) -> "$name=\"${encodeAttributeValue(value)}\"" }
+                "<mrow $serializedAttributes>" +
+                    "${children.joinToString("") { it.toMathMLInner() }}</mrow>"
+            } else {
+                when (children.size) {
+                    0 -> ""
+                    1 -> children[0].toMathMLInner()
+                    else -> "<mrow>${children.joinToString("") { it.toMathMLInner() }}</mrow>"
+                }
             }
-        }
-
-        is MathMrowWithCriterion -> {
-            // Always emit <mrow> with the mx-judge attribute — the tag cannot be elided even for
-            // 0/1 children because the attribute itself must be preserved for roundtrip fidelity.
-            "<mrow $MX_JUDGE=\"${criterionToString(
-                criterion,
-            )}\">${children.joinToString("") { it.toMathMLInner() }}</mrow>"
         }
 
         is MathMfrac -> {
@@ -161,3 +164,8 @@ private fun encodeText(text: String): String =
         .replace("&", "&amp;")
         .replace("<", "&lt;")
         .replace(">", "&gt;")
+
+private fun encodeAttributeValue(value: String): String =
+    encodeText(value)
+        .replace("\"", "&quot;")
+        .replace("'", "&apos;")

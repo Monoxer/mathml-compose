@@ -8,7 +8,6 @@ import com.monoxer.mathmlcompose.math.MathMo
 import com.monoxer.mathmlcompose.math.MathMover
 import com.monoxer.mathmlcompose.math.MathMroot
 import com.monoxer.mathmlcompose.math.MathMrow
-import com.monoxer.mathmlcompose.math.MathMrowWithCriterion
 import com.monoxer.mathmlcompose.math.MathMspace
 import com.monoxer.mathmlcompose.math.MathMsqrt
 import com.monoxer.mathmlcompose.math.MathMsub
@@ -20,7 +19,6 @@ import com.monoxer.mathmlcompose.math.MathMunderover
 import com.monoxer.mathmlcompose.math.MathNone
 import com.monoxer.mathmlcompose.math.MathPlaceholder
 import com.monoxer.mathmlcompose.math.MathStructuralNone
-import com.monoxer.mathmlcompose.math.ScoringCriterion
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -263,38 +261,113 @@ class MathMLParserTest {
         assertEquals(MathMtext("hello"), result)
     }
 
-    // ── mx-judge ─────────────────────────────────────────────────────────────
+    // ── data mrow attributes ─────────────────────────────────────────────────
 
     @Test
-    fun parse_mrowWithMxJudge_returnsMathMrowWithCriterion() {
-        listOf(
-            "strict" to ScoringCriterion.STRICT,
-            "numeric" to ScoringCriterion.NUMERIC,
-            "symbolic" to ScoringCriterion.NUMERIC_AND_SYMBOLIC,
-            "simplified" to ScoringCriterion.NUMERIC_AND_SIMPLIFIED,
-        ).forEach { (judgeStr, expectedCriterion) ->
-            val result = MathMLParser.parse("""<math><mrow mx-judge="$judgeStr"><mi>x</mi></mrow></math>""")
-            val row =
-                assertIs<MathMrowWithCriterion>(result, "expected MathMrowWithCriterion for mx-judge=\"$judgeStr\"")
-            assertEquals(expectedCriterion, row.criterion)
-            assertEquals(listOf(MathMi("x")), row.children)
+    fun parse_preservesAllDataAttributes() {
+        val result =
+            MathMLParser.parse(
+                """<math><mrow data-mode="numeric" data-source="Answer_123-value"><mi>x</mi></mrow></math>""",
+            )
+
+        assertEquals(
+            MathMrow(
+                children = listOf(MathMi("x")),
+                attributes = mapOf("data-mode" to "numeric", "data-source" to "Answer_123-value"),
+            ),
+            result,
+        )
+    }
+
+    @Test
+    fun parse_ignoresNonDataAttributes() {
+        val result = MathMLParser.parse("""<math><mrow custom-meta="value"><mi>x</mi><mi>y</mi></mrow></math>""")
+
+        assertEquals(MathMrow(listOf(MathMi("x"), MathMi("y"))), result)
+    }
+
+    @Test
+    fun parse_selfClosingMrow_preservesAllDataAttributes() {
+        val result =
+            MathMLParser.parse(
+                """<math><mrow data-mode="numeric" data-source="answer"/></math>""",
+            )
+
+        assertEquals(
+            MathMrow(
+                emptyList(),
+                mapOf("data-mode" to "numeric", "data-source" to "answer"),
+            ),
+            result,
+        )
+        assertEquals(result, MathMLParser.parse(result.toMathML()))
+    }
+
+    @Test
+    fun parse_invalidDataAttributes_ignoresThemForOpenAndSelfClosingMrows() {
+        val cases =
+            listOf(
+                "empty value" to """data-meta=""""",
+                "space in value" to """data-meta="any value"""",
+                "dot in value" to """data-meta="value.with.dot"""",
+                "punctuation in value" to """data-meta="value!"""",
+                "non-ASCII value" to """data-meta="日本語"""",
+                "decoded XML special characters" to """data-meta='&quot;&apos;&amp;&lt;&gt;'""",
+                "empty name suffix" to """data-="value"""",
+                "dot in name" to """data-mode.="value"""",
+                "punctuation in name" to """data-mode!="value"""",
+                "uppercase name" to """data-Mode="value"""",
+            )
+
+        cases.forEach { (description, attribute) ->
+            assertEquals(
+                MathMi("x"),
+                MathMLParser.parse("<math><mrow $attribute><mi>x</mi></mrow></math>"),
+                "Expected $description to be ignored on an open mrow: $attribute",
+            )
+            assertEquals(
+                MathNone,
+                MathMLParser.parse("<math><mrow $attribute/></math>"),
+                "Expected $description to be ignored on a self-closing mrow: $attribute",
+            )
         }
     }
 
     @Test
-    fun parse_mrowWithoutMxJudge_returnsPlainMrow() {
-        val result = MathMLParser.parse("<math><mrow><mi>a</mi><mi>b</mi></mrow></math>")
-        assertIs<MathMrow>(result)
+    fun parse_mixedDataAttributes_preservesOnlyValidAttributes() {
+        val openResult =
+            MathMLParser.parse(
+                """<math><mrow data-mode="numeric" data-note="invalid value" data-Mode="strict">""" +
+                    """<mi>x</mi></mrow></math>""",
+            )
+        val selfClosingResult =
+            MathMLParser.parse(
+                """<math><mrow data-mode="numeric" data-note="日本語" data-mode.="strict"/></math>""",
+            )
+
+        assertEquals(
+            MathMrow(listOf(MathMi("x")), mapOf("data-mode" to "numeric")),
+            openResult,
+        )
+        assertEquals(
+            MathMrow(emptyList(), mapOf("data-mode" to "numeric")),
+            selfClosingResult,
+        )
     }
 
     @Test
-    fun parse_hiddenMrowWithCriterion_allLeavesReplacedWithNone() {
+    fun parse_hiddenMrowWithDataAttributes_allLeavesReplacedWithNone() {
         val result =
             MathMLParser.parse(
-                """<math><mrow mx-judge="numeric" mx-data-is-hidden="true"><mi>x</mi><mn>1</mn></mrow></math>""",
+                mathml =
+                    """<math><mrow data-meta="value" mx-data-is-hidden="true">""" +
+                        """<mi>x</mi><mn>1</mn></mrow></math>""",
             )
-        val row = assertIs<MathMrowWithCriterion>(result)
+        val row = assertIs<MathMrow>(result)
+        assertEquals(mapOf("data-meta" to "value"), row.attributes)
         row.children.forEach { assertIs<MathNone>(it) }
+        val reparsed = assertIs<MathMrow>(MathMLParser.parse(result.toMathML()))
+        assertEquals(row.attributes, reparsed.attributes)
     }
 
     // ── mstyle / mphantom passthrough ─────────────────────────────────────────

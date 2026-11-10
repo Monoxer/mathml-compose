@@ -21,6 +21,17 @@ class FormulaInputStateTest {
     private fun FormulaInputState.rootChildren(): List<MathElement> = rootRow().children
 
     @Test
+    fun insertLeaf_attributedRootRow_preservesAttributes() {
+        val attributes = mapOf("data-meta" to "value")
+        val state = FormulaInputState(MathMrow(listOf(MathCursor), attributes))
+
+        val result = state.insertLeaf(MathMi("x"))
+
+        assertEquals(attributes, result.rootRow().attributes)
+        assertEquals(listOf(MathMi("x"), MathCursor), result.rootChildren())
+    }
+
+    @Test
     fun insertLeaf_consecutiveMathMn_storesAsSeparateNodes() {
         val state =
             FormulaInputState()
@@ -211,6 +222,17 @@ class FormulaInputStateTest {
         assertEquals("x", (result.children[0] as MathMi).text)
         assertEquals("+", (result.children[1] as MathMo).text)
         assertEquals("1", (result.children[2] as MathMn).text)
+    }
+
+    @Test
+    fun toResultElement_attributedRow_removesCursorAndPreservesAttributes() {
+        val attributes = mapOf("data-meta" to "value")
+        val state = FormulaInputState(MathMrow(listOf(MathMi("x"), MathCursor), attributes))
+
+        val result = assertIs<MathMrow>(state.toResultElement())
+
+        assertEquals(attributes, result.attributes)
+        assertEquals(listOf(MathMi("x")), result.children)
     }
 
     @Test

@@ -4,7 +4,6 @@ import com.monoxer.mathmlcompose.math.MSPACE_LINEBREAK_ATTR
 import com.monoxer.mathmlcompose.math.MSPACE_LINEBREAK_NEWLINE
 import com.monoxer.mathmlcompose.math.MX_DATA_IS_HIDDEN
 import com.monoxer.mathmlcompose.math.MX_IS_PLACEHOLDER
-import com.monoxer.mathmlcompose.math.MX_JUDGE
 import com.monoxer.mathmlcompose.math.MathElement
 import com.monoxer.mathmlcompose.math.MathMfrac
 import com.monoxer.mathmlcompose.math.MathMi
@@ -15,7 +14,6 @@ import com.monoxer.mathmlcompose.math.MathMover
 import com.monoxer.mathmlcompose.math.MathMprescriptsMarker
 import com.monoxer.mathmlcompose.math.MathMroot
 import com.monoxer.mathmlcompose.math.MathMrow
-import com.monoxer.mathmlcompose.math.MathMrowWithCriterion
 import com.monoxer.mathmlcompose.math.MathMspace
 import com.monoxer.mathmlcompose.math.MathMsqrt
 import com.monoxer.mathmlcompose.math.MathMsub
@@ -27,7 +25,7 @@ import com.monoxer.mathmlcompose.math.MathMunderover
 import com.monoxer.mathmlcompose.math.MathNone
 import com.monoxer.mathmlcompose.math.MathPlaceholder
 import com.monoxer.mathmlcompose.math.MathStructuralNone
-import com.monoxer.mathmlcompose.math.convertStringToCriterion
+import com.monoxer.mathmlcompose.math.isValidDataAttribute
 
 /**
  * Parses a MathML XML string into a [MathElement] tree.
@@ -35,6 +33,11 @@ import com.monoxer.mathmlcompose.math.convertStringToCriterion
  */
 @Suppress("CyclomaticComplexMethod", "TooManyFunctions")
 object MathMLParser {
+    private const val ATTRIBUTE_NAME_GROUP = 1
+    private const val DOUBLE_QUOTED_VALUE_GROUP = 2
+    private const val SINGLE_QUOTED_VALUE_GROUP = 3
+
+    /** Parses [mathml], preserving valid `data-*` attributes on `mrow` and ignoring invalid ones. */
     fun parse(mathml: String): MathElement {
         val tokens = tokenize(mathml.trim())
         val (element, _) = parseTokens(tokens, 0)
@@ -102,9 +105,13 @@ object MathMLParser {
         val name = tagContent.substring(0, spaceIdx).lowercase()
         val attrStr = tagContent.substring(spaceIdx + 1)
         val attrs = mutableMapOf<String, String>()
-        val regex = Regex("""([\w-]+)(?:="([^"]*)")?""")
+        val regex = Regex("""([^\s=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'))?""")
         regex.findAll(attrStr).forEach { m ->
-            attrs[m.groupValues[1]] = m.groupValues[2]
+            val attributeName = m.groupValues[ATTRIBUTE_NAME_GROUP]
+            val doubleQuotedValue = m.groupValues[DOUBLE_QUOTED_VALUE_GROUP]
+            val singleQuotedValue = m.groupValues[SINGLE_QUOTED_VALUE_GROUP]
+            val value = doubleQuotedValue.ifEmpty { singleQuotedValue }
+            attrs[attributeName] = decodeEntities(value)
         }
         return name to attrs
     }
@@ -146,6 +153,8 @@ object MathMLParser {
             "&lt;" to "<",
             "&gt;" to ">",
             "&amp;" to "&",
+            "&quot;" to "\"",
+            "&apos;" to "'",
             "&pi;" to "π",
             "&infin;" to "∞",
         )
@@ -172,7 +181,8 @@ object MathMLParser {
         open: Token.Open,
     ): Pair<MathElement?, Int> {
         val hidden = open.attrs[MX_DATA_IS_HIDDEN] == "true"
-        val (children, nextIndex) = consumeChildren(tokens, startIndex + 1, open.name)
+        val (children, nextIndex) =
+            consumeChildren(tokens, startIndex + 1, open.name)
         return if (hidden) {
             // Preserve tree structure but replace every leaf with MathNone so each
             // hidden slot renders as a separate blank box in the input area.
@@ -196,10 +206,6 @@ object MathMLParser {
             }
 
             is MathMrow -> {
-                element.copy(children = element.children.map { replaceAllLeavesWithNone(it) })
-            }
-
-            is MathMrowWithCriterion -> {
                 element.copy(children = element.children.map { replaceAllLeavesWithNone(it) })
             }
 
@@ -312,9 +318,12 @@ object MathMLParser {
             }
 
             "mrow" -> {
-                val criterion = attrs[MX_JUDGE]?.let { convertStringToCriterion(it) }
-                if (criterion != null) {
-                    MathMrowWithCriterion(children, criterion)
+                val dataAttributes = attrs.validDataAttributes()
+                if (dataAttributes.isNotEmpty()) {
+                    MathMrow(
+                        children = children,
+                        attributes = dataAttributes,
+                    )
                 } else {
                     wrapChildren(children)
                 }
@@ -418,6 +427,8 @@ object MathMLParser {
 
     private fun parseSelfClose(token: Token.SelfClose): MathElement =
         when (token.name) {
+            "mrow" -> parseSelfClosingMrow(token)
+
             "mspace" -> MathMspace(isLinebreak = token.attrs[MSPACE_LINEBREAK_ATTR] == MSPACE_LINEBREAK_NEWLINE)
 
             // <none/> marks an empty script slot inside <mmultiscripts>; use MathStructuralNone
@@ -431,6 +442,18 @@ object MathMLParser {
 
             else -> MathNone
         }
+
+    private fun parseSelfClosingMrow(token: Token.SelfClose): MathElement =
+        token.attrs.validDataAttributes().let { dataAttributes ->
+            if (dataAttributes.isNotEmpty()) {
+                MathMrow(emptyList(), dataAttributes)
+            } else {
+                MathNone
+            }
+        }
+
+    private fun Map<String, String>.validDataAttributes(): Map<String, String> =
+        filter { (name, value) -> isValidDataAttribute(name, value) }
 
     private fun wrapChildren(children: List<MathElement>): MathElement =
         when (children.size) {

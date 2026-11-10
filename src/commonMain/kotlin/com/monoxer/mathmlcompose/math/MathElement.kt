@@ -73,18 +73,12 @@ data class MathMfrac(
 
 data class MathMrow(
     val children: List<MathElement>,
+    val attributes: Map<String, String> = emptyMap(),
 ) : MathElement {
-    override fun minText(): String = children.joinToString("") { it.minText() }
-}
+    init {
+        requireValidDataAttributes(attributes)
+    }
 
-/**
- * An [MathMrow] variant that carries a [ScoringCriterion] from the `mx-judge` MathML attribute.
- * Used to mark sub-expressions that should be evaluated with a specific scoring criterion.
- */
-data class MathMrowWithCriterion(
-    val children: List<MathElement>,
-    val criterion: Int,
-) : MathElement {
     override fun minText(): String = children.joinToString("") { it.minText() }
 }
 

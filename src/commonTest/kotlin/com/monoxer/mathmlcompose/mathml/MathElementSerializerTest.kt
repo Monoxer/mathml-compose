@@ -11,7 +11,6 @@ import com.monoxer.mathmlcompose.math.MathMo
 import com.monoxer.mathmlcompose.math.MathMover
 import com.monoxer.mathmlcompose.math.MathMroot
 import com.monoxer.mathmlcompose.math.MathMrow
-import com.monoxer.mathmlcompose.math.MathMrowWithCriterion
 import com.monoxer.mathmlcompose.math.MathMspace
 import com.monoxer.mathmlcompose.math.MathMsqrt
 import com.monoxer.mathmlcompose.math.MathMsub
@@ -23,9 +22,9 @@ import com.monoxer.mathmlcompose.math.MathMunderover
 import com.monoxer.mathmlcompose.math.MathNone
 import com.monoxer.mathmlcompose.math.MathPlaceholder
 import com.monoxer.mathmlcompose.math.MathStructuralNone
-import com.monoxer.mathmlcompose.math.ScoringCriterion
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -148,33 +147,114 @@ class MathElementSerializerTest {
         assertEquals(MathPlaceholder, MathMLParser.parse(xml), "MathPlaceholder should roundtrip via mx-is-placeholder")
     }
 
-    // ── mx-judge / MathMrowWithCriterion ─────────────────────────────────────
+    // ── MathMrow data attributes ─────────────────────────────────────────────
 
     @Test
-    fun toMathML_mrowWithCriterion_includesMxJudgeAttribute() {
-        listOf(
-            MathMrowWithCriterion(listOf(MathMi("x")), ScoringCriterion.STRICT) to "strict",
-            MathMrowWithCriterion(listOf(MathMi("x")), ScoringCriterion.NUMERIC) to "numeric",
-            MathMrowWithCriterion(listOf(MathMi("x")), ScoringCriterion.NUMERIC_AND_SYMBOLIC) to "symbolic",
-            MathMrowWithCriterion(listOf(MathMi("x")), ScoringCriterion.NUMERIC_AND_SIMPLIFIED) to "simplified",
-        ).forEach { (elem, judgeValue) ->
-            val xml = elem.toMathML()
-            assertTrue(xml.contains("mx-judge=\"$judgeValue\""), "Expected mx-judge=\"$judgeValue\" in: $xml")
+    fun toMathML_mrowWithDataAttributes_preservesAttributesInSortedOrder() {
+        val element =
+            MathMrow(
+                children = listOf(MathMi("x")),
+                attributes = linkedMapOf("data-zeta" to "last", "data-alpha" to "first"),
+            )
+
+        assertEquals(
+            """<math><mrow data-alpha="first" data-zeta="last"><mi>x</mi></mrow></math>""",
+            element.toMathML(),
+        )
+    }
+
+    @Test
+    fun toMathML_mrowWithDataAttributes_serializesValidValueAndRoundtrips() {
+        val element =
+            MathMfrac(
+                numerator =
+                    MathMrow(
+                        children = listOf(MathMi("x")),
+                        attributes = mapOf("data-meta" to "Alpha_123-value"),
+                    ),
+                denominator = MathMn("2"),
+            )
+        val xml = element.toMathML()
+
+        assertEquals(
+            """<math><mfrac><mrow data-meta="Alpha_123-value"><mi>x</mi></mrow><mn>2</mn></mfrac></math>""",
+            xml,
+        )
+        assertEquals(element, MathMLParser.parse(xml))
+    }
+
+    @Test
+    fun mrowWithDataAttributes_withInvalidAttributes_throws() {
+        val cases =
+            listOf(
+                "equals sign in name" to mapOf("data-data=meta" to "value"),
+                "missing data prefix" to mapOf("custom-meta" to "value"),
+                "empty name suffix" to mapOf("data-" to "value"),
+                "uppercase name" to mapOf("data-Meta" to "value"),
+                "empty value" to mapOf("data-meta" to ""),
+                "space in value" to mapOf("data-meta" to "any value"),
+                "punctuation in value" to mapOf("data-meta" to "value!"),
+                "XML special characters in value" to mapOf("data-meta" to "\"'&<>"),
+            )
+
+        cases.forEach { (description, attributes) ->
+            assertFailsWith<IllegalArgumentException>("Expected $description to be rejected") {
+                MathMrow(listOf(MathMi("x")), attributes)
+            }
         }
     }
 
     @Test
-    fun toMathML_mrowWithCriterion_roundtrip() {
-        listOf(
-            ScoringCriterion.STRICT,
-            ScoringCriterion.NUMERIC,
-            ScoringCriterion.NUMERIC_AND_SYMBOLIC,
-            ScoringCriterion.NUMERIC_AND_SIMPLIFIED,
-        ).forEach { criterion ->
-            val elem = MathMrowWithCriterion(listOf(MathMi("x"), MathMo("+"), MathMn("1")), criterion)
-            val xml = elem.toMathML()
-            assertEquals(elem, MathMLParser.parse(xml), "MathMrowWithCriterion(criterion=$criterion) roundtrip")
+    fun toMathML_mrowWithDataAttributes_mutatedToInvalidAttributes_throws() {
+        val cases =
+            listOf(
+                "invalid name" to mapOf("data-meta!" to "injected"),
+                "invalid value" to mapOf("data-meta" to "invalid value"),
+            )
+
+        cases.forEach { (description, mutatedAttributes) ->
+            val attributes = mutableMapOf("data-meta" to "value")
+            val element = MathMrow(listOf(MathMi("x")), attributes)
+            attributes.clear()
+            attributes.putAll(mutatedAttributes)
+
+            assertFailsWith<IllegalArgumentException>("Expected mutated $description to be rejected") {
+                element.toMathML()
+            }
         }
+    }
+
+    @Test
+    fun toMathML_mrowWithEmptyAttributes_usesOriginalFoldingBehavior() {
+        assertEquals("<math></math>", MathMrow(emptyList(), emptyMap()).toMathML())
+        assertEquals("<math><mi>x</mi></math>", MathMrow(listOf(MathMi("x")), emptyMap()).toMathML())
+    }
+
+    @Test
+    fun toMathML_mrowWithDataAttributes_preservesTagForAnyChildCount() {
+        val attributes = mapOf("data-meta" to "value")
+
+        assertEquals(
+            """<math><mrow data-meta="value"></mrow></math>""",
+            MathMrow(emptyList(), attributes).toMathML(),
+        )
+        assertEquals(
+            """<math><mrow data-meta="value"><mi>x</mi></mrow></math>""",
+            MathMrow(listOf(MathMi("x")), attributes).toMathML(),
+        )
+        assertEquals(
+            """<math><mrow data-meta="value"><mi>x</mi><mo>+</mo><mn>1</mn></mrow></math>""",
+            MathMrow(listOf(MathMi("x"), MathMo("+"), MathMn("1")), attributes).toMathML(),
+        )
+    }
+
+    @Test
+    fun toMathML_mrowMutatedToEmptyAttributes_usesOriginalFoldingBehavior() {
+        val attributes = mutableMapOf("data-meta" to "value")
+        val element = MathMrow(listOf(MathMi("x")), attributes)
+        attributes.clear()
+
+        assertEquals("<math><mi>x</mi></math>", element.toMathML())
     }
 
     // ── MathFilledSlot delegates to child ────────────────────────────────────
@@ -255,10 +335,13 @@ class MathElementSerializerTest {
     // ── Empty child slots use <mrow/> placeholder ─────────────────────────────
 
     @Test
-    fun toMathML_mfracWithNoneChild_usesEmptyMrowPlaceholder() {
+    fun toMathML_mfracWithNoneChild_usesEmptyMrowPlaceholderAndRoundtrips() {
         // MathNone serializes to "" — mfrac must still emit two children
         val elem = MathMfrac(numerator = MathNone, denominator = MathMi("b"))
-        assertEquals("<math><mfrac><mrow/><mi>b</mi></mfrac></math>", elem.toMathML())
+        val mathml = elem.toMathML()
+
+        assertEquals("<math><mfrac><mrow/><mi>b</mi></mfrac></math>", mathml)
+        assertEquals(elem, MathMLParser.parse(mathml))
     }
 
     @Test

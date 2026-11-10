@@ -138,6 +138,24 @@ MathCanvas(element = displayElement, colors = colors, editable = true)
 hintState = hintState.fillSlot(MathMi("x"))
 ```
 
+### Custom data attributes on mrow
+
+MathML Core [`data-*` attributes](https://w3c.github.io/mathml-core/#global-attributes) on `mrow` are
+preserved automatically in `MathMrow.attributes`, so no parser configuration is needed:
+
+```kotlin
+val dataAttributeMathml =
+    """<math><mrow data-mode="numeric" data-source="answer"><mi>x</mi></mrow></math>"""
+val element = MathMLParser.parse(dataAttributeMathml)
+```
+
+Data attribute names must match `data-[a-z0-9_][a-z0-9_-]*` (ASCII lowercase only), and their values
+must match `[A-Za-z0-9_-]+`. MathML defines `data-*` as global attributes for caller-defined
+metadata, so integrations remain isolated from future library attributes. Each `mrow` may contain
+multiple data attributes. During parsing, data attributes that do not match these rules are ignored;
+constructing `MathMrow` directly with invalid attributes throws an exception. An empty attributes
+map is valid and keeps the original attribute-free `mrow` folding and serialization behavior.
+
 ### Serialization
 
 `MathElement` round-trips to and from MathML strings:

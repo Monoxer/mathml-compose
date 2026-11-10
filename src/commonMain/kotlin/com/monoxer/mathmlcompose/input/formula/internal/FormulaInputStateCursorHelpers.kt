@@ -82,7 +82,11 @@ internal fun withCursorRemoved(elem: MathElement): MathElement =
 
         is MathMrow if elem.children.any { it is MathCursor } -> {
             val remaining = elem.children.filterNot { it is MathCursor }
-            if (remaining.isEmpty()) MathPlaceholder else elem.copy(children = remaining)
+            if (remaining.isEmpty() && elem.attributes.isEmpty()) {
+                MathPlaceholder
+            } else {
+                elem.copy(children = remaining)
+            }
         }
 
         else -> {

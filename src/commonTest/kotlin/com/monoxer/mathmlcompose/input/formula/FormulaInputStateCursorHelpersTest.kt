@@ -14,6 +14,7 @@ import com.monoxer.mathmlcompose.math.MathPlaceholder
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 class FormulaInputStateCursorHelpersTest {
     @Test
@@ -28,6 +29,17 @@ class FormulaInputStateCursorHelpersTest {
         val result = assertIs<MathMrow>(withCursorAtFirst(row))
         assertIs<MathCursor>(result.children[0])
         assertEquals(MathMn("1"), result.children[1])
+    }
+
+    @Test
+    fun withCursorAtFirst_attributedMrow_preservesAttributes() {
+        val attributes = mapOf("data-meta" to "value")
+        val row = MathMrow(listOf(MathMn("1")), attributes)
+
+        val result = assertIs<MathMrow>(withCursorAtFirst(row))
+
+        assertEquals(attributes, result.attributes)
+        assertEquals(listOf(MathCursor, MathMn("1")), result.children)
     }
 
     @Test
@@ -83,6 +95,17 @@ class FormulaInputStateCursorHelpersTest {
     fun withCursorRemoved_mrowWithOnlyCursor_returnsPlaceholder() {
         val row = MathMrow(listOf(MathCursor))
         assertIs<MathPlaceholder>(withCursorRemoved(row))
+    }
+
+    @Test
+    fun withCursorRemoved_attributedMrowWithOnlyCursor_preservesEmptyRowAndAttributes() {
+        val attributes = mapOf("data-meta" to "value")
+        val row = MathMrow(listOf(MathCursor), attributes)
+
+        val result = assertIs<MathMrow>(withCursorRemoved(row))
+
+        assertTrue(result.children.isEmpty())
+        assertEquals(attributes, result.attributes)
     }
 
     @Test

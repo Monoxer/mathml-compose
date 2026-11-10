@@ -15,7 +15,6 @@ import com.monoxer.mathmlcompose.math.MathMover
 import com.monoxer.mathmlcompose.math.MathMprescriptsMarker
 import com.monoxer.mathmlcompose.math.MathMroot
 import com.monoxer.mathmlcompose.math.MathMrow
-import com.monoxer.mathmlcompose.math.MathMrowWithCriterion
 import com.monoxer.mathmlcompose.math.MathMspace
 import com.monoxer.mathmlcompose.math.MathMsqrt
 import com.monoxer.mathmlcompose.math.MathMsub
@@ -129,8 +128,6 @@ internal fun createLayout(element: MathElement): MathElementLayout =
         is MathMtext -> MathMtextLayout(element)
 
         is MathMrow -> MathMrowLayout(element)
-
-        is MathMrowWithCriterion -> MathMrowLayout(MathMrow(element.children))
 
         is MathMfrac -> MathMfracLayout(element)
 

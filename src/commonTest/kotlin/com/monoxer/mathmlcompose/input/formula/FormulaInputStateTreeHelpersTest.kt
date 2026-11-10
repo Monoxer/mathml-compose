@@ -90,9 +90,21 @@ class FormulaInputStateTreeHelpersTest {
     }
 
     @Test
+    fun replaceAtPath_attributedMrow_replacesChildAndPreservesAttributes() {
+        val attributes = mapOf("data-meta" to "value")
+        val root = MathMrow(listOf(MathMn("1"), MathCursor), attributes)
+
+        val result = assertIs<MathMrow>(replaceAtPath(root, listOf(0), MathMi("x")))
+
+        assertEquals(attributes, result.attributes)
+        assertEquals(listOf(MathMi("x"), MathCursor), result.children)
+    }
+
+    @Test
     fun isEditableSlot_placeholderAndMrow_returnTrue() {
         assertTrue(isEditableSlot(MathPlaceholder))
         assertTrue(isEditableSlot(MathMrow(emptyList())))
+        assertTrue(isEditableSlot(MathMrow(emptyList(), mapOf("data-meta" to "value"))))
     }
 
     @Test
