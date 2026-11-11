@@ -200,15 +200,9 @@ implementation detail and may change without notice between versions.
 └── demoIosApp/                   # SwiftUI application entry point for the demo
 ```
 
-## Development
+## Contributing
 
-```bash
-./gradlew jvmTest             # run unit tests on the JVM target
-./gradlew ktlintCheck          # check Kotlin formatting and style
-./gradlew ktlintFormat         # format Kotlin sources
-./gradlew detekt               # run static analysis and auto-correct supported findings
-./gradlew build                # build and test all targets; also runs ktlintCheck and detekt
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for review expectations and development checks.
 
 ## License
 
